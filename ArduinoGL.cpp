@@ -11,6 +11,9 @@
 #elif defined(ILI9341)
 #include "ILI9341_t3n.h"
 #include <SPIN.h>
+#elif defined(ra8875)
+#include <SPI.h>
+#include <RA8875.h>
 #endif
 
 #if defined(ILI9488)
@@ -19,6 +22,10 @@ Arduino_OpenGL::Arduino_OpenGL(SPIClass *SPIWire, uint8_t _CS, uint8_t _DC, uint
 }
 #elif defined(ILI9341)
 Arduino_OpenGL::Arduino_OpenGL(uint8_t _CS, uint8_t _DC, uint8_t _RST, uint8_t _MOSI, uint8_t _SCLK, uint8_t _MISO, SPINClass *pspin) : ILI9341_t3n(  _CS, _DC, _RST, _MOSI, _SCLK, _MISO, (SPINClass*)(&SPIN)) 
+{
+}
+#elif defined(ra8875)
+Arduino_OpenGL::Arduino_OpenGL(const uint8_t CSp,const uint8_t RSTp,const uint8_t mosi_pin,const uint8_t sclk_pin,const uint8_t miso_pin) : RA8875( CSp, RSTp, mosi_pin, sclk_pin, miso_pin) 
 {
 }
 #endif
@@ -352,7 +359,11 @@ void Arduino_OpenGL::glVertex3f(float x, float y, float z) {
 //}
 
 void Arduino_OpenGL::glClear(uint16_t color) {
-    fillScreen(color);
+	#if defined(ra8875)
+		clearScreen(color);
+	#else
+		fillScreen(color);
+	#endif
 }
 
 void Arduino_OpenGL::glPointSize(unsigned size) {
@@ -406,7 +417,7 @@ void Arduino_OpenGL::glEnd(void) {
             
             for(int x = (px - glPointLength/2.0); x <= (px + glPointLength/2.0); x++)
                 for(int y = (py - glPointLength/2.0); y <= (py + glPointLength/2.0); y++)
-                    drawPixel(x, y, 0xFFFF);  //White for now
+                    drawPixel(x, y, glColor);  //White for now
         }
     }
     
@@ -463,4 +474,8 @@ void Arduino_OpenGL::glEnd(void) {
             
         }
     }
+}
+
+void Arduino_OpenGL::glColorP(uint8_t r, uint8_t g, uint8_t b ) {  //not really openGL format
+	glColor = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }

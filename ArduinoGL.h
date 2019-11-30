@@ -8,7 +8,8 @@
 #define ArduinoGL_h
 
 //#define ILI9488 1
-#define ILI9341 1
+//#define ILI9341 1
+#define ra8875 1
 
 #include "Arduino.h"
 #if defined ILI9488
@@ -18,6 +19,9 @@
 #include "ILI9341_t3n.h"
 #include <SPI.h>
 #include <SPIN.h>
+#elif defined(ra8875)
+#include <SPI.h>
+#include <RA8875.h>
 #endif
 
 
@@ -59,9 +63,14 @@ public:
   Arduino_OpenGL(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, 
 		uint8_t _MOSI=11, uint8_t _SCLK=13, uint8_t _MISO=12, 
 		SPINClass *pspin=(SPINClass*)(&SPIN));
+#elif defined(ra8875)
+class Arduino_OpenGL : public  RA8875
+{
+public:
+  Arduino_OpenGL(const uint8_t CSp,const uint8_t RSTp=255,const uint8_t mosi_pin=11,const uint8_t sclk_pin=13,const uint8_t miso_pin=12);
 #endif
 
-
+	void glColorP(uint8_t r, uint8_t g, uint8_t b );
 	void copyMatrix(float * dest, float * src);
 	void multMatrix(float * dest, float * src1, float * src2);
 	void pushMatrix(float * m);
@@ -113,6 +122,8 @@ public:
 	float glMatrixStack[MAX_MATRICES][16];
 	unsigned glMatrixStackTop = 0;
 	unsigned glPointLength = 1;
+	
+	uint16_t glColor = 0xFFFF;
 
 };
 
