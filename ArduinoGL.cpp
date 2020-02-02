@@ -35,7 +35,7 @@ Arduino_OpenGL::Arduino_OpenGL(SPIClass *SPIWire, uint8_t _CS, uint8_t _DC, uint
 {
 }
 #elif defined(ILI9341)
-Arduino_OpenGL::Arduino_OpenGL(uint8_t _CS, uint8_t _DC, uint8_t _RST, uint8_t _MOSI, uint8_t _SCLK, uint8_t _MISO, SPINClass *pspin) : ILI9341_t3n(  _CS, _DC, _RST, _MOSI, _SCLK, _MISO) 
+Arduino_OpenGL::Arduino_OpenGL(uint8_t _CS, uint8_t _DC, uint8_t _RST, uint8_t _MOSI, uint8_t _SCLK, uint8_t _MISO) : ILI9341_t3n(  _CS, _DC, _RST, _MOSI, _SCLK, _MISO) 
 {
 }
 #elif defined(ra8875)
