@@ -489,7 +489,13 @@ void Arduino_OpenGL::glEnd(void) {
 				drawLine(px[0], py[0]+thick, px[1], py[1]+thick, glColor);
 			}
 			else {
-				drawLine(px[0]+thick, py[0]+2*thick, px[1]+thick, py[1]+2*thick, glColor);
+				if(dx < 0 && dy > 0) {
+					drawLine(px[0]+thick, py[0]+thick, px[1]+thick, py[1]+thick, glColor);
+				} else if(dx > 0 && dy < 0){
+					drawLine(px[0]-thick, py[0]-thick, px[1]-thick, py[1]-thick, glColor);
+				} else {
+					drawLine(px[0]-thick, py[0]+thick, px[1]-thick, py[1]+thick, glColor);
+				}
 			}
 		}
 	}
@@ -523,7 +529,13 @@ void Arduino_OpenGL::glEnd(void) {
 					drawLine(px[i], py[i]+thick, px[i+1], py[i+1]+thick, glColor_T[i]);
 				}
 				else {
-					drawLine(px[i]+thick, py[i]+2*thick, px[i+1]+thick, py[i+1]+2*thick, glColor_T[i]);
+					if(dx < 0 && dy > 0) {
+						drawLine(px[i]+thick, py[i]+thick, px[i+1]+thick, py[i+1]+thick, glColor_T[i]);
+					} else if(dx > 0 && dy < 0){
+						drawLine(px[i]-thick, py[i]-thick, px[i+1]-thick, py[i+1]-thick, glColor_T[i]);
+					} else {
+						drawLine(px[i]-thick, py[i]+thick, px[i+1]-thick, py[i+1]+thick, glColor_T[i]);
+					}
 				}
 			}
 		}
@@ -558,7 +570,13 @@ void Arduino_OpenGL::glEnd(void) {
 					drawLine(px[i], py[i]+thick, px[i+1], py[i+1]+thick, glColor_T[i]);
 				}
 				else {
-					drawLine(px[i]+thick, py[i]+2*thick, px[i+1]+thick, py[i+1]+2*thick, glColor_T[i]);
+					if(dx < 0 && dy > 0) {
+						drawLine(px[i]+thick, py[i]+thick, px[i+1]+thick, py[i+1]+thick, glColor_T[i]);
+					} else if(dx > 0 && dy < 0){
+						drawLine(px[i]-thick, py[i]-thick, px[i+1]-thick, py[i+1]-thick, glColor_T[i]);
+					} else {
+						drawLine(px[i]-thick, py[i]+thick, px[i+1]-thick, py[i+1]+thick, glColor_T[i]);
+					}
 				}
 			}
 		}
@@ -573,21 +591,27 @@ void Arduino_OpenGL::glEnd(void) {
 				drawLine(px[glVerticesCount-1], py[glVerticesCount-1]+thick, px[0], py[0]+thick, glColor_T[glVerticesCount-1]);
 			}
 			else {
-				drawLine(px[glVerticesCount-1]+thick, py[glVerticesCount-1]+2*thick, px[0]+thick, py[0]+2*thick, glColor_T[glVerticesCount-1]);
+				if(dx < 0 && dy > 0) {
+					drawLine(px[glVerticesCount-1]+thick, py[glVerticesCount-1]+thick, px[0]+thick, py[0]+thick, glColor_T[glVerticesCount-1]);
+				} else if(dx > 0 && dy < 0){
+					drawLine(px[glVerticesCount-1]-thick, py[glVerticesCount-1]-thick, px[0]-thick, py[0]-thick, glColor_T[glVerticesCount-1]);
+				} else {
+					drawLine(px[glVerticesCount-1]-thick, py[glVerticesCount-1]+thick, px[0]-thick, py[0]+thick, glColor_T[glVerticesCount-1]);
+				}
 			}
 		}
 		
 	}
 	
-    else if(glDrawMode == GL_QUADS) {
+    else if(glDrawMode == GL_QUAD) {
 
         /* TODO Improve! */
         if(glVerticesCount < 4)
             return;
         
-        int px[4], py[4];
+        int px[MAX_VERTICES], py[MAX_VERTICES];
             
-        for(uint8_t i = 0; i < 4; i++) {
+        for(uint8_t i = 0; i < glVerticesCount; i++) {
             
             if(!(glVertices[i].z >= -1.0 && glVertices[i].z <= 1.0))
                 return;
@@ -599,7 +623,7 @@ void Arduino_OpenGL::glEnd(void) {
         }
         
 		uint8_t idxQ = 0;
-        for(uint16_t i = 0; i < 4; i++) {
+        for(uint16_t i = 0; i < glVerticesCount; i++) {
             uint16_t next = (i + 1 == glVerticesCount) ? 0:(i + 1);
             drawLine(px[i], py[i], px[next], py[next], glColor_Q[idxQ]);
 			idxQ += 1;

@@ -37,7 +37,7 @@ typedef enum {
 	GL_LINES,
 	GL_LINE_STRIP,
 	GL_LINE_LOOP,
-    GL_QUADS,
+    GL_QUAD,
 	GL_POLYGON,
     GL_TRIANGLE_STRIP
 } GLDrawMode;
@@ -59,8 +59,8 @@ typedef struct {
     float x, y, z, w;
 } GLVertex;
 
-#define MAX_VERTICES 24
-#define MAX_MATRICES 8
+#define MAX_VERTICES 240
+#define MAX_MATRICES 80
 
 #define DEG2RAD (3.15159/180.0)
 //#define readUnsignedByte(t)     ((uint16_t)pgm_read_byte(&(t)))
@@ -162,13 +162,19 @@ public:
 	void glColorQ(uint8_t idx, uint8_t r, uint8_t g, uint8_t b );
 	uint16_t glColor_Q[4] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF};
 	
-  // Basic triangle shader functions. 
-  // Interpolated color triangles are drawn similarly to regular triangles
-  // In that they are broken into horizontal scanlines. For this we need
-  // a fast horizontal interpolated line function. Additionally, we 
-  // optionally support overdraw, which prevents pixels from the current
-  // frame from being over-drawn. This requires skipping some segments
-  // of the triangle.
+  /* Basic triangle shader functions. 
+   * Extracted and slightly modified from Michael Rule's
+   * Uno9341TFT library, Optomized graphics drivers and demos for 
+   * Arduino Uno for the 320x240 TFT LCD screens 
+   * with the ILI9341 driver, https://github.com/michaelerule/Uno9341TFT
+   *   
+   * Interpolated color triangles are drawn similarly to regular triangles
+   * In that they are broken into horizontal scanlines. For this we need
+   * a fast horizontal interpolated line function. Additionally, we 
+   * optionally support overdraw, which prevents pixels from the current
+   * frame from being over-drawn. This requires skipping some segments
+   * of the triangle.
+   */
   uint8_t color_map[16];
 
   void     interpolateFlood(int16_t x, int16_t y, int16_t i, uint16_t stop, int16_t length, uint16_t color1, uint16_t color2);
