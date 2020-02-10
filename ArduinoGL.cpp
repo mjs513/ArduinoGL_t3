@@ -45,11 +45,9 @@ Arduino_OpenGL::Arduino_OpenGL(const uint8_t CSp,const uint8_t RSTp,const uint8_
 #elif defined(ST7735)
   Arduino_OpenGL::Arduino_OpenGL(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST) : ST7735_t3( CS,  RS,  SID,  SCLK,  RST)
   {
-	  setColorMap(11);
   }
   Arduino_OpenGL::Arduino_OpenGL(uint8_t CS, uint8_t RS, uint8_t RST) :   ST7735_t3( CS,  RS,  RST)
   {
-	  setColorMap(11);
   }
 #elif defined(ST7789)
   Arduino_OpenGL::Arduino_OpenGL(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST) : ST7789_t3( CS,  RS,  SID,  SCLK,  RST)
@@ -67,6 +65,7 @@ void Arduino_OpenGL::copyMatrix(float * dest, float * src) {
         dest[i] = src[i];
 }
 
+FLASHMEM
 void Arduino_OpenGL::multMatrix(float * dest, float * src1, float * src2) {
     
     int i, j, k;
@@ -102,6 +101,7 @@ void Arduino_OpenGL::popMatrix(void) {
     }
 }
 
+FLASHMEM
 GLVertex multVertex(float * m, GLVertex v) {
     
     GLVertex ret;
@@ -114,6 +114,7 @@ GLVertex multVertex(float * m, GLVertex v) {
     return ret;
 }
 
+FLASHMEM
 void Arduino_OpenGL::normVector3(float * dest, float * src) {
     
     float norm;
@@ -125,6 +126,7 @@ void Arduino_OpenGL::normVector3(float * dest, float * src) {
         dest[i] = src[i]/norm;
 }
 
+FLASHMEM
 void Arduino_OpenGL::crossVector3(float * dest, float * src1, float * src2) {
     
     float ret[3];
@@ -174,6 +176,7 @@ void Arduino_OpenGL::glPopMatrix(void) {
     popMatrix();
 }
 
+FLASHMEM
 void Arduino_OpenGL::glOrtho(float left, float right, float bottom, float top, float zNear, float zFar) {
     
     float tx = -(right + left)/(right - left);
@@ -201,6 +204,7 @@ void Arduino_OpenGL::gluOrtho2D(float left, float right, float bottom, float top
     glOrtho(left, right, bottom, top, -1.0, 1.0);
 }
 
+FLASHMEM
 void Arduino_OpenGL::glFrustum(float left, float right, float bottom, float top, float zNear, float zFar) {
     
     float A = (right + left)/(right - left);
@@ -225,6 +229,7 @@ void Arduino_OpenGL::glFrustum(float left, float right, float bottom, float top,
     glMultMatrixf(m);
 }
 
+FLASHMEM
 void Arduino_OpenGL::gluPerspective(float fovy, float aspect, float zNear, float zFar) {
     
     float aux = tan((fovy/2.0) * DEG2RAD);
@@ -236,6 +241,7 @@ void Arduino_OpenGL::gluPerspective(float fovy, float aspect, float zNear, float
     glFrustum(left, right, bottom, top, zNear, zFar);
 }
 
+FLASHMEM
 void Arduino_OpenGL::glRotatef(float angle, float x, float y, float z) {
     
     float c = cos(DEG2RAD * angle), s = sin(DEG2RAD * angle);
@@ -270,6 +276,7 @@ void Arduino_OpenGL::glRotatef(float angle, float x, float y, float z) {
     glMultMatrixf(m);
 }
 
+FLASHMEM
 void Arduino_OpenGL::glTranslatef(float x, float y, float z) {
     
     float m[16];
@@ -289,6 +296,7 @@ void Arduino_OpenGL::glTranslatef(float x, float y, float z) {
     glMultMatrixf(m);
 }
 
+FLASHMEM
 void Arduino_OpenGL::glScalef(float x, float y, float z) {
     
     float m[16];
@@ -305,6 +313,7 @@ void Arduino_OpenGL::glScalef(float x, float y, float z) {
     glMultMatrixf(m);
 }
 
+FLASHMEM
 void Arduino_OpenGL::gluLookAt(float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX, float upY, float upZ) {
     
     float dir[3], up[3];
@@ -356,6 +365,7 @@ void Arduino_OpenGL::glVertex4fv(float * v) {
     glVertex4f(v[0], v[1], v[2], v[3]);
 }
 
+FLASHMEM
 void Arduino_OpenGL::glVertex4f(float x, float y, float z, float w) {
     
     GLVertex v;
@@ -412,8 +422,10 @@ void Arduino_OpenGL::glBegin(GLDrawMode mode) {
 	for(uint8_t i=0; i<4; i++) {glColor_Q[i] = 0xFFFF; }
 	color_default_array = 1;
 	color_default = 1;
+	NFACES = 0;
 }
 
+FLASHMEM
 void Arduino_OpenGL::glEnd(void) {
     
     if(glDrawMode == GL_NONE)
@@ -458,7 +470,7 @@ void Arduino_OpenGL::glEnd(void) {
                 for(int y = (py - glPointLength/2.0); y <= (py + glPointLength/2.0); y++)
                     drawPixel(x, y, glColor);  //White for now
         }
-		glColor3i(255,255,255);
+		glColor3ub(255,255,255);
     }
 
     else if(glDrawMode == GL_LINES) {
@@ -481,7 +493,8 @@ void Arduino_OpenGL::glEnd(void) {
 		
 		int dx = px[1] - px[0];
 		int dy = py[1] - py[0];
-		for(uint8_t thick = 0; thick < glPointLength; thick++){
+		for(uint8_t t = 0; t < glPointLength; t++){
+			thick = offset_thick[t];
 			if(dx == 0){
 				drawLine(px[0]+thick, py[0], px[1]+thick, py[1], glColor);
 			}
@@ -517,11 +530,12 @@ void Arduino_OpenGL::glEnd(void) {
 			px[i] = (((aux->x + 1.0)/2.0) * (frameWidth - 1));
             py[i] = ((1.0 - ((aux->y + 1.0)/2.0)) * (frameHeight - 1));
         }
-		
+
 		for(uint16_t i = 0; i < glVerticesCount-1; i++) {
 			int dx = px[i+1] - px[i];
 			int dy = py[i+1] - py[i];
-			for(uint8_t thick = 0; thick < glPointLength; thick++){
+			for(uint8_t t = 0; t < glPointLength; t++){
+				thick = offset_thick[t];
 				if(dx == 0){
 					drawLine(px[i]+thick, py[i], px[i+1]+thick, py[i+1], glColor_T[i]);
 				}
@@ -562,7 +576,8 @@ void Arduino_OpenGL::glEnd(void) {
 		for(uint16_t i = 0; i < glVerticesCount-1; i++) {
 			int dx = px[i+1] - px[i];
 			int dy = py[i+1] - py[i];
-			for(uint8_t thick = 0; thick < glPointLength; thick++){
+			for(uint8_t t = 0; t < glPointLength; t++){
+				thick = offset_thick[t];
 				if(dx == 0){
 					drawLine(px[i]+thick, py[i], px[i+1]+thick, py[i+1], glColor_T[i]);
 				}
@@ -604,9 +619,12 @@ void Arduino_OpenGL::glEnd(void) {
 	}
 	
     else if(glDrawMode == GL_QUAD) {
-
+      // 0---2---4
+      // |   |   |
+      // 1---3---5
+	  
         /* TODO Improve! */
-        if(glVerticesCount < 4)
+        if(glVerticesCount < 4 && (glVerticesCount % 4 == 0))
             return;
         
         int px[MAX_VERTICES], py[MAX_VERTICES];
@@ -622,16 +640,53 @@ void Arduino_OpenGL::glEnd(void) {
             py[i] = ((1.0 - ((aux->y + 1.0)/2.0)) * (frameHeight - 1));
         }
         
-		uint8_t idxQ = 0;
-        for(uint16_t i = 0; i < glVerticesCount; i++) {
-            uint16_t next = (i + 1 == glVerticesCount) ? 0:(i + 1);
-            drawLine(px[i], py[i], px[next], py[next], glColor_Q[idxQ]);
-			idxQ += 1;
-			if(next == 0) idxQ = 0;
-        }
+		//this works but does not give you fills
+		/*uint8_t idxQ = 0;
+		uint8_t endpt = 0;
+		for(uint16_t quad = 0; quad < ((uint8_t) (glVerticesCount / 4)); quad++){
+			uint8_t ptIdx = quad*4;
+			for(uint16_t i = ptIdx; i < ptIdx+4; i++) {
+				uint16_t next = (i + 1 == ptIdx+4) ? 0:(i + 1);
+				if(next == 0) {
+					endpt = ptIdx;
+				} else {
+					endpt = next;
+				}
+				drawLine(px[i], py[i], px[endpt], py[endpt], glColor_Q[idxQ]);
+				idxQ += 1;
+				if(next == 0) idxQ = 0;
+			}
+		}
+		*/
+
+		//breaking the quad up into triangles allows for shading and fills
+		for(uint16_t quad = 0; quad < ((uint8_t) (glVerticesCount / 4)); quad++){
+			uint8_t ptIdx = quad*4;
+			if(color_default_array != 1){
+				for(uint16_t i = ptIdx; i < ptIdx+4 - 2; i++) {
+					drawLine(px[i], py[i], px[i + 1], py[i + 1], glColor_T[i]);
+					drawLine(px[i], py[i], px[i + 2], py[i + 2], glColor_T[i+1]);
+					drawLine(px[i + 1], py[i + 1], px[i + 2], py[i + 2], glColor_T[i+2]);
+				}
+			} else {
+				for(uint16_t i = ptIdx; i < ptIdx+4 - 2; i++) {
+					fillTriangle ( px[i], py[i],
+							  px[i + 1], py[i + 1],
+							  px[i + 2], py[i + 2], glColor);
+				}
+			}
+		}
 		
+		if(glShader == SimpleVertexShader) {
+			for(uint16_t quad = 0; quad < ((uint8_t) (glVerticesCount / 4)); quad++){
+				uint8_t ptIdx = quad*4;
+				for(uint16_t i = ptIdx; i < ptIdx - 2; i++) {
+					shadeTriangle(px[i], py[i], px[i+1], py[i+1], px[i+2], py[i+2], glColor_T[i], glColor_T[i+1], glColor_T[i+2]);
+				}
+			}
+		}
     }
-	
+
     else if(glDrawMode == GL_POLYGON) {
 
         /* TODO Improve! */
@@ -658,16 +713,77 @@ void Arduino_OpenGL::glEnd(void) {
 			idxQ += 1;
 			if(next == 0) idxQ = 0;
         }
-		
 	}
     
-    else if(glDrawMode == GL_TRIANGLE_STRIP) {
-        
-        /* TODO Improve! */
+    else if(glDrawMode == GL_TRIANGLES) {
+
+		/* TODO Improve! */
         if(glVerticesCount < 3)
             return;
         
         int px[MAX_VERTICES], py[MAX_VERTICES];
+		
+		NFACES = glVerticesCount/3;
+        
+        for(uint16_t i = 0; i < glVerticesCount; i++) {
+            
+            if(!(glVertices[i].z >= -1.0 && glVertices[i].z <= 1.0))
+                return;
+            
+            GLVertex * aux = &(glVertices[i]);
+            
+            px[i] = (((aux->x + 1.0)/2.0) * (frameWidth - 1));
+            py[i] = ((1.0 - ((aux->y + 1.0)/2.0)) * (frameHeight - 1));
+        }
+
+		for(uint16_t trig = 0; trig < ((uint8_t) (glVerticesCount / 3)); trig++){
+			uint8_t ptIdx = trig*3;
+			if(color_default_array != 1){
+				for(uint16_t i = ptIdx; i < ptIdx+3 - 2; i++) {
+				//for(uint16_t i = 0; i < glVerticesCount - 2; i++) {
+					drawLine(px[i], py[i], px[i + 1], py[i + 1], glColor_T[i]);
+					drawLine(px[i], py[i], px[i + 2], py[i + 2], glColor_T[i+1]);
+					drawLine(px[i + 1], py[i + 1], px[i + 2], py[i + 2], glColor_T[i+2]);
+				}
+			} else {
+				for(uint16_t i = ptIdx; i < ptIdx+3 - 2; i++) {
+				//for(uint16_t i = 0; i < glVerticesCount - 2; i++) {
+					fillTriangle ( px[i], py[i],
+							  px[i + 1], py[i + 1],
+							  px[i + 2], py[i + 2], glColor);
+				}
+				//glColor3ub(255,255,255);
+			}
+		}
+ 
+		if(glShader == SimpleVertexShader) {
+			for(uint16_t i = 0; i < glVerticesCount - 2; i++) {
+				shadeTriangle(px[i], py[i], px[i+1], py[i+1], px[i+2], py[i+2], glColor_T[i], glColor_T[i+1], glColor_T[i+2]);
+			}
+		} 
+		else if(glShader == FacetShader){
+			//vertex normals and normalization
+			vertex_normalize();
+			float normColor;
+			for(uint16_t i = 0; i < NFACES; i++) {
+				//normColor = glVertices[i].nz < 0?0:glVertices[i].nz;
+				normColor = abs(glVertices[i].nz);
+				uint16_t color = (((uint8_t)(normColor* _r) & 0xF8) << 8) | (((uint8_t)(normColor* _g) & 0xFC) << 3) | ((uint8_t)((normColor* _b)) >> 3);
+				fillTriangle ( px[i], py[i],
+						  px[i + 1], py[i + 1],
+						  px[i + 2], py[i + 2], color);
+			}
+		}
+    }
+    else if(glDrawMode == GL_TRIANGLE_STRIP) {
+
+		/* TODO Improve! */
+        if(glVerticesCount < 3)
+            return;
+        
+        int px[MAX_VERTICES], py[MAX_VERTICES];
+		
+		NFACES = glVerticesCount - 2;
         
         for(uint16_t i = 0; i < glVerticesCount; i++) {
             
@@ -687,25 +803,41 @@ void Arduino_OpenGL::glEnd(void) {
 				drawLine(px[i + 1], py[i + 1], px[i + 2], py[i + 2], glColor_T[i+2]);
 			}
 		} else {
-
 			for(uint16_t i = 0; i < glVerticesCount - 2; i++) {
 				fillTriangle ( px[i], py[i],
 						  px[i + 1], py[i + 1],
 						  px[i + 2], py[i + 2], glColor);
 			}
-			glColor3i(255,255,255);
+			//glColor3ub(255,255,255);
 		}
  
-		
 		if(glShader == SimpleVertexShader) {
 			for(uint16_t i = 0; i < glVerticesCount - 2; i++) {
 				shadeTriangle(px[i], py[i], px[i+1], py[i+1], px[i+2], py[i+2], glColor_T[i], glColor_T[i+1], glColor_T[i+2]);
+			}
+		} 
+		else if(glShader == FacetShader){
+			//vertex normals and normalization
+			vertex_normalize();
+			float normColor;
+			for(uint16_t i = 0; i < NFACES; i++) {
+				//normColor = glVertices[i].nz < 0?0:glVertices[i+2].nz;
+				normColor = abs(glVertices[i].nz);
+				uint16_t color = (((uint8_t)(normColor* _r) & 0xF8) << 8) | (((uint8_t)(normColor* _g) & 0xFC) << 3) | ((uint8_t)((normColor* _b)) >> 3);
+				//Serial.printf("%d, %d, %d, %f, %f\n", i, px[i], py[i],
+				//	glVertices[i].nz, normColor);
+				fillTriangle ( px[i], py[i],
+						  px[i + 1], py[i + 1],
+						  px[i + 2], py[i + 2], color);
 			}
 		}
     }
 }
 
-void Arduino_OpenGL::glColor3i(uint8_t r, uint8_t g, uint8_t b ) {  //not really openGL format
+void Arduino_OpenGL::glColor3ub(uint8_t r, uint8_t g, uint8_t b ) {  //not really openGL format
+	_r = r;
+	_g = g;
+	_b = b;
 	glColor = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 	color_default = 0;
 }
@@ -718,6 +850,104 @@ void Arduino_OpenGL::glColorT(uint8_t idx, uint8_t r, uint8_t g, uint8_t b ) {  
 void Arduino_OpenGL::glColorQ(uint8_t idx, uint8_t r, uint8_t g, uint8_t b ) {  //not really openGL format
 	glColor_Q[idx] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
+
+
+/*
+ * <https://computergraphics.stackexchange.com/questions/4031/programmatically-generating-vertex-normals> 
+ */
+void Arduino_OpenGL::vertex_normalize() 
+{ 		
+	 float ba[3], ca[3];
+	 float vn[3], vnn[3];
+	 
+	 for(uint8_t j = 0; j<3; j++) vn[j] = 0.0;
+	 
+	if( glDrawMode == GL_TRIANGLES )	 
+		 for( int i=0; i < NFACES; i++ )
+		 {
+			uint8_t ptIdx = i*3;
+			//Serial.printf("Points:%d %f, %f, %f\n", i, glVertices[i].x,glVertices[ptIdx].y, glVertices[ptIdx].z);
+			//Serial.printf("Points:%d %f, %f, %f\n", i, glVertices[i+1].x,glVertices[ptIdx+1].y, glVertices[ptIdx+1].z);
+			//Serial.printf("Points:%d %f, %f, %f\n", i, glVertices[ptIdx+2].x,glVertices[ptIdx+2].y, glVertices[ptIdx+2].z);
+
+			ba[0] = glVertices[ptIdx+1].x - glVertices[ptIdx].x;
+			ba[1] = glVertices[ptIdx+1].y - glVertices[ptIdx].y;		
+			ba[2] = glVertices[ptIdx+1].z - glVertices[ptIdx].z;
+
+			ca[0] = glVertices[ptIdx+2].x - glVertices[ptIdx].x;
+			ca[1] = glVertices[ptIdx+2].y - glVertices[ptIdx].y;		
+			ca[2] = glVertices[ptIdx+2].z - glVertices[ptIdx].z;
+			
+			//vertex normals
+			crossVector3(vn, ba, ca);
+			//vn[0] = ba[1] * ca[2] - ba[2] * ca[1];
+			//vn[1] = ba[2] * ca[0] - ba[0] * ca[2];
+			//vn[2] = ba[0] * ca[1] - ba[1] * ca[0];
+			
+			glVertices[ptIdx].nx += vn[0]; 
+			glVertices[ptIdx].ny += vn[1];
+			glVertices[ptIdx].nz += vn[2];
+			glVertices[ptIdx+1].nx += vn[0]; 
+			glVertices[ptIdx+1].ny += vn[1];
+			glVertices[ptIdx+1].nz += vn[2];
+			glVertices[ptIdx+2].nx += vn[0]; 
+			glVertices[ptIdx+2].ny += vn[1];
+			glVertices[ptIdx+2].nz += vn[2];
+			
+			//Serial.printf("\tVn: (%d) %f, %f, %f\n", i, vn[0], vn[1], vn[2]);
+	} 
+	
+	else if( glDrawMode == GL_TRIANGLE_STRIP ) {
+		 for( int i=0; i < NFACES; i++ )
+		 {
+			uint8_t ptIdx = i;
+			//Serial.printf("Points:%d %f, %f, %f\n", i, glVertices[i].x,glVertices[ptIdx].y, glVertices[ptIdx].z);
+			//Serial.printf("Points:%d %f, %f, %f\n", i, glVertices[i+1].x,glVertices[ptIdx+1].y, glVertices[ptIdx+1].z);
+			//Serial.printf("Points:%d %f, %f, %f\n", i, glVertices[ptIdx+2].x,glVertices[ptIdx+2].y, glVertices[ptIdx+2].z);
+
+			ba[0] = glVertices[ptIdx+1].x - glVertices[ptIdx].x;
+			ba[1] = glVertices[ptIdx+1].y - glVertices[ptIdx].y;		
+			ba[2] = glVertices[ptIdx+1].z - glVertices[ptIdx].z;
+
+			ca[0] = glVertices[ptIdx+2].x - glVertices[ptIdx].x;
+			ca[1] = glVertices[ptIdx+2].y - glVertices[ptIdx].y;		
+			ca[2] = glVertices[ptIdx+2].z - glVertices[ptIdx].z;
+			
+			//vertex normals
+			crossVector3(vn, ba, ca);
+			//vn[0] = ba[1] * ca[2] - ba[2] * ca[1];
+			//vn[1] = ba[2] * ca[0] - ba[0] * ca[2];
+			//vn[2] = ba[0] * ca[1] - ba[1] * ca[0];
+			
+			glVertices[ptIdx].nx += vn[0]; 
+			glVertices[ptIdx].ny += vn[1];
+			glVertices[ptIdx].nz += vn[2];
+			glVertices[ptIdx+1].nx += vn[0]; 
+			glVertices[ptIdx+1].ny += vn[1];
+			glVertices[ptIdx+1].nz += vn[2];
+			glVertices[ptIdx+2].nx += vn[0]; 
+			glVertices[ptIdx+2].ny += vn[1];
+			glVertices[ptIdx+2].nz += vn[2];
+			
+			//Serial.printf("\tVn: (%d) %f, %f, %f\n", i, vn[0], vn[1], vn[2]);
+		 }
+	}
+	
+	for( int i=0; i < glVerticesCount; i++ )
+	 {
+		//vector normalization
+		//normVector3(vnn, vn);
+		float norm;
+		//Serial.printf("%f, %f, %f\n",glVertices[i].nx, glVertices[i].ny, glVertices[i].nz);
+		norm = sqrt(glVertices[i].nx * glVertices[i].nx  +  glVertices[i].ny * glVertices[i].ny + glVertices[i].nz * glVertices[i].nz);
+ 		
+		glVertices[i].nx /= norm; 
+		glVertices[i].ny /= norm;
+		glVertices[i].nz /= norm;
+		//Serial.printf("%f, %f\n", glVertices[i].nz, norm);
+	 }
+ }
+
 
 
 ////////////////////////////////////////////////////////////////////////

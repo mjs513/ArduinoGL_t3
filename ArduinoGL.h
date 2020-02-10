@@ -39,6 +39,7 @@ typedef enum {
 	GL_LINE_LOOP,
     GL_QUAD,
 	GL_POLYGON,
+	GL_TRIANGLES,
     GL_TRIANGLE_STRIP
 } GLDrawMode;
 
@@ -50,19 +51,22 @@ typedef enum {
 typedef enum {
 	NONE = 0,
     SimpleVertexShader,
+	FacetShader
 } GLShader;
 
 /* Masks */
 #define GL_COLOR_BUFFER_BIT 0x1
 
 typedef struct {
-    float x, y, z, w;
+    float x, y, z, w;   // vertex points
+	float nx, ny, nz;	// vertex normals per face vertex count - 2
 } GLVertex;
+
 
 #define MAX_VERTICES 240
 #define MAX_MATRICES 80
 
-#define DEG2RAD (3.15159/180.0)
+#define DEG2RAD (M_PI/180.0)
 //#define readUnsignedByte(t)     ((uint16_t)pgm_read_byte(&(t)))
 
 #ifdef __cplusplus
@@ -150,10 +154,12 @@ public:
 	unsigned glMatrixStackTop = 0;
 	unsigned glPointLength = 1;
 	
-	void glColor3i(uint8_t r, uint8_t g, uint8_t b );
+	void glColor3ub(uint8_t r, uint8_t g, uint8_t b );
 	uint16_t glColor = 0xFFFF;
+
+
 	void glColorT(uint8_t idx, uint8_t r, uint8_t g, uint8_t b );
-	uint16_t glColor_T[24] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+	uint16_t glColor_T[240] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF,
 	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
 	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
 	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
@@ -161,6 +167,10 @@ public:
 	0xFFFF,0xFFFF,0xFFFF,0xFFFF};
 	void glColorQ(uint8_t idx, uint8_t r, uint8_t g, uint8_t b );
 	uint16_t glColor_Q[4] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF};
+	
+	int16_t thick = 1;
+	int16_t offset_thick[11] = {0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5};
+	int NFACES = 0;
 	
   /* Basic triangle shader functions. 
    * Extracted and slightly modified from Michael Rule's
@@ -183,8 +193,12 @@ public:
   uint16_t interpolate(int16_t color1, int16_t color2, int16_t alpha);
   void     setColorMap(uint8_t cmap);
   
+  //Shading
+  void vertex_normalize();
+  
 private:
 	uint8_t color_default, color_default_array;
+	uint8_t _r, _g, _b;
 };
 
 #endif
