@@ -2,6 +2,11 @@
     ArduinoGL.h - OpenGL subset for Arduino.
     Created by Fabio de Albuquerque Dela Antonio
     fabio914 at gmail.com
+	
+	UPDATE:  Modified for use on a Teensy 4 and functions
+	expanded for additional primitives and shading based on
+	Michael Rule's Uno9341TFT library on GITHUB.  Expanded to
+	use additional displays.
  */
 
 #ifndef ArduinoGL_h
@@ -37,7 +42,7 @@ typedef enum {
 	GL_LINES,
 	GL_LINE_STRIP,
 	GL_LINE_LOOP,
-    GL_QUAD,
+    GL_QUADS,
 	GL_POLYGON,
 	GL_TRIANGLES,
     GL_TRIANGLE_STRIP
@@ -51,8 +56,31 @@ typedef enum {
 typedef enum {
 	NONE = 0,
     SimpleVertexShader,
-	FacetShader
+	FacetShader,
+	SmoothShader
 } GLShader;
+
+#define PU8  const uint8_t  *
+#define P8   const int8_t   * 
+#define PU16 const uint16_t *
+#define P16	 const int16_t *
+
+/* Model struct. Pointers to PROGMEM stored vertex, 
+   edge, triangle, and edge-map arrays. Numbers denoting
+   the length of said arrays. In practice, any number of 
+   these pointser may be null. At minimum, a list of vertex
+   points is needed to render a model.
+*/ 
+typedef struct Model {
+    uint16_t NVertices;
+    uint16_t NEdges;
+    uint16_t NFaces;
+    P16    vertices;
+    PU16   edges;
+    PU16   faces;
+    P16    vertexNormals;
+    P16    faceNormals;
+} Model;
 
 /* Masks */
 #define GL_COLOR_BUFFER_BIT 0x1
@@ -63,8 +91,8 @@ typedef struct {
 } GLVertex;
 
 
-#define MAX_VERTICES 240
-#define MAX_MATRICES 80
+#define MAX_VERTICES 1024*3
+#define MAX_MATRICES 8
 
 #define DEG2RAD (M_PI/180.0)
 //#define readUnsignedByte(t)     ((uint16_t)pgm_read_byte(&(t)))
@@ -145,8 +173,11 @@ public:
 	//Arduino openGL
 	GLDrawMode glDrawMode = GL_NONE;
 	GLShader glShader = NONE;
-	GLVertex glVertices[MAX_VERTICES];
+	GLVertex *glVertices = (GLVertex*)malloc(sizeof(GLVertex) * MAX_VERTICES);
+	//GLVertex glVertices[MAX_VERTICES];
 	unsigned glVerticesCount = 0;
+	
+	uint16_t draw_order[MAX_VERTICES/3];
 
 	GLMatrixMode glmatrixMode = GL_PROJECTION;
 	float glMatrices[2][16];
@@ -158,14 +189,9 @@ public:
 	uint16_t glColor = 0xFFFF;
 
 
-	void glColorT(uint8_t idx, uint8_t r, uint8_t g, uint8_t b );
-	uint16_t glColor_T[240] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF,
-	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
-	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
-	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
-	0xFFFF,0xFFFF,0xFFFF,0xFFFF,
-	0xFFFF,0xFFFF,0xFFFF,0xFFFF};
-	void glColorQ(uint8_t idx, uint8_t r, uint8_t g, uint8_t b );
+	void glColorT(uint16_t idx, uint8_t r, uint8_t g, uint8_t b );
+	uint16_t glColor_T[MAX_VERTICES];
+	void glColorQ(uint16_t idx, uint8_t r, uint8_t g, uint8_t b );
 	uint16_t glColor_Q[4] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF};
 	
 	int16_t thick = 1;
@@ -186,19 +212,33 @@ public:
    * of the triangle.
    */
   uint8_t color_map[16];
+  	float _div = 32.;
+	
+  void get_triangle_points(Model *M, int16_t *vertices, int16_t i, int16_t **p, int16_t **q, int16_t **r);
 
-  void     interpolateFlood(int16_t x, int16_t y, int16_t i, uint16_t stop, int16_t length, uint16_t color1, uint16_t color2);
+  void     interpolateFlood(int16_t x, int16_t y, int16_t i, int16_t stop, int16_t length, uint16_t color1, uint16_t color2);
   void     interpolateFastHLine(int16_t x, int16_t y0, uint16_t w, uint16_t color1, uint16_t color2);
   void     shadeTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color0, uint16_t color1, uint16_t color2);
   uint16_t interpolate(int16_t color1, int16_t color2, int16_t alpha);
   void     setColorMap(uint8_t cmap);
   
+  float facing_camera(float *p, float *q, float *r);   
+  void shadeFaces(GLVertex *vertices, uint16_t *vertex_colors, uint16_t *draw_order);
+  void computeTriangleDepths(uint16_t nt, GLVertex *vertices, uint16_t *draw_order, float *depths);
+  void updateDrawingOrder(uint16_t nt, GLVertex *vertices, uint16_t *draw_order);
+  
+  
   //Shading
-  void vertex_normalize();
+  void vertex_normalize(uint16_t *draw_order);
+  float getCofactor(float m0, float m1, float m2,
+                    float m3, float m4, float m5,
+                    float m6, float m7, float m8);
   
 private:
 	uint8_t color_default, color_default_array;
 	uint8_t _r, _g, _b;
+	float _eyeX, _eyeY, _eyeZ;
+
 };
 
 #endif
